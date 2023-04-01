@@ -1,0 +1,34 @@
+import requests
+import numpy as np
+import pandas as pd
+import yfinance as yf
+import matplotlib.pyplot as plt
+from statsmodels.tsa.stattools import adfuller
+
+IBM_yf = yf.Ticker('IBM')
+IBM_hist = IBM_yf.history(period='max')
+
+def test_stationarity(timeseries):
+    
+    #Perform Dickey-Fuller test:
+    print('Results of Dickey-Fuller Test:')
+    dftest = adfuller(timeseries, autolag='AIC')
+    dfoutput = pd.Series(dftest[0:4], index=['Test Statistic','p-value','#Lags Used','Number of Observations Used'])
+    for key,value in dftest[4].items():
+        dfoutput['Critical Value (%s)'%key] = value
+    print(dfoutput)
+    
+    
+test_stationarity(IBM_hist['Close'])
+
+IBM_hist_log = np.log(IBM_hist.Close)
+IBM_hist_log.plot()
+plt.show()
+
+IBM_hist_log_diff = IBM_hist_log.diff(periods=1)
+IBM_hist_log_diff.plot()
+plt.show()
+
+test_stationarity(IBM_hist_log_diff.dropna(inplace=False))
+
+#After removing heterodasticity and trend, the residues show a p-value below 0,05. Therefore, we can reject that the resulting series is not stationary and affirm that the residues after removing heterodasticity and trend are stationary.
